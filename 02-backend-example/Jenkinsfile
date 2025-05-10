@@ -1,0 +1,83 @@
+pipeline {
+    // pre-build
+    agent {
+        label 'AGENT-1'
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()       //to disable the pipeline running simultaneously
+        //retry(1)        // retry once in case of failure
+    }
+    environment {
+        appVersion = ''     // This is global env variable. we can use across pipeline
+    }
+    //build
+    stages {
+        stage('Read json') {
+            steps {
+                script {
+                    def packageJson = readJSON file: 'package.json'
+                    appVersion = packageJson.version
+                    echo "App Version is : ${appVersion}"
+                }
+            }
+        }
+        stage('Install dependencies') {
+            steps {
+                sh 'npm install'    // AGENT-1 server needs to be installed with nodejs 20 with command dnf install nodejs -y
+            }
+        }
+        stage('Dcoker build') {
+            steps {
+                // multiple commands can be enetered as below
+                sh """
+                docker build -t suresh/backend:${appVersion} .
+                docker images
+                """    
+            }
+        }
+        stage('Deploy') {
+            when {      // this stage is executed when the when condition is true
+                expression {env.GIT_BRANCH == 'origin/main'}
+            }
+            steps {
+                sh 'echo this is deploy stage'
+            }
+        }
+        stage('print params') {
+            steps {
+                echo "Hello ${params.PERSON}"       // params is reserved keyword in jenkins
+                echo "Biography: ${params.BIOGRAPHY}"
+                echo "Toggle: ${params.TOGGLE}"
+                echo "Choice: ${params.CHOICE}"
+                echo "Password: ${params.PASSWORD}"
+            }
+        }
+        stage('Approval') {
+            input {         // input field, when this stage comes in jenkins build, it waits until ok button is pressed. Then only this stage will be executed.
+                message "Should we continue?"
+                ok "Yes, we should."
+                submitter "alice,bob"
+                parameters {
+                    string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+                }
+            }
+            steps {
+                echo "Hello, ${PERSON}, nice to meet you."
+            }
+        }
+    }
+    //post build
+    post {
+        always {
+            echo "this section runs always"
+            deleteDir()
+        }
+        success {
+            echo " this section runs only when success of pipeline"
+        }
+        failure {
+            echo "this runs when failure of pipeline"
+        }
+    }
+}
