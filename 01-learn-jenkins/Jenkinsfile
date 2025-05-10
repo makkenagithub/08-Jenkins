@@ -1,5 +1,22 @@
 pipeline {
-    agent any
+    // pre-build
+    agent {
+        label 'AGENT-1'
+    }
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()       //to disable the pipeline running simultaneously
+        //retry(1)        // retry once in case of failure
+    }
+    parameters {
+        string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+        text(name: 'BIOGRAPHY', defaultValue: '', description: 'Enter some information about the person')
+        booleanParam(name: 'TOGGLE', defaultValue: true, description: 'Toggle this value')
+        choice(name: 'CHOICE', choices: ['One', 'Two', 'Three'], description: 'Pick something')
+        password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password')
+    }
+
+    //build
     stages {
         stage('Build') {
             steps {
@@ -16,11 +33,34 @@ pipeline {
                 sh 'echo this is deploy stage'
             }
         }
+        stage('print params') {
+            steps {
+                echo "Hello ${params.PERSON}"       // params is reserved keyword in jenkins
+                echo "Biography: ${params.BIOGRAPHY}"
+                echo "Toggle: ${params.TOGGLE}"
+                echo "Choice: ${params.CHOICE}"
+                echo "Password: ${params.PASSWORD}"
+            }
+        }
+        stage('Approval') {
+            input {         // input field, when this stage comes in jenkins build, it waits until ok button is pressed. Then only this stage will be executed.
+                message "Should we continue?"
+                ok "Yes, we should."
+                submitter "alice,bob"
+                parameters {
+                    string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+                }
+            }
+            steps {
+                echo "Hello, ${PERSON}, nice to meet you."
+            }
+        }
     }
-
+    //post build
     post {
         always {
             echo "this section runs always"
+            deleteDir()
         }
         success {
             echo " this section runs only when success of pipeline"
