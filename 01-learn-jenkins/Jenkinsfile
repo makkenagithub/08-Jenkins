@@ -29,6 +29,9 @@ pipeline {
             }
         }
         stage('Deploy') {
+            when {      // this stage is executed when the when condition is true
+                expression {env.GIT_BRANCH == 'origin/main'}
+            }
             steps {
                 sh 'echo this is deploy stage'
             }
