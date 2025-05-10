@@ -93,6 +93,9 @@ How to make agent connects to master?
 5. Launch method -> launch via ssh -> host (private-ip) , Then add credentials with username/password or private key etc.
 6. save
 
+How to disconnect agent to master?
+1. Jenkins console -> dash board -> manage jenkins -> nodes -> agent-1 -> disconnect
+
 then click on agent node and click on log and see, master is trying to connect to agent and connection is successful.
 
 Once the build is completed, then all its info is stored in the path given in the path given in step 4. Its stored in master node. We do not need this build info once the job is completed. So 1000's of jobs can run and we dont need them once their job is completed. So we have an option to delete once teh build id done for a job/pipeline (deleteDir()). https://www.jenkins.io/doc/pipeline/steps/workflow-basic-steps/
@@ -123,6 +126,19 @@ poll SCM means, we can configure like to check every one hour, if any changes oc
 webhooks is popular
 
 Build after other projects build is also popular and used in upstream/downstream 
+
+
+Backend example: Versions are important now. Version info exists in package.json. We need to read the version info and add to docker image.
+
+To read the version from json file, we need to install its corresponding plugin. It is "pipeline utility steps" plugin. https://www.jenkins.io/doc/pipeline/steps/pipeline-utility-steps/
+
+Also we need to install nodejs in AGENT-1 server. Similarly we need to build docker image, so docker also needs to be installed in AGENT-1 server. (All these can be installed in a server and create an AMI)
+
+After installing docker, its better to disconnect and connect back agent with master.
+
+
+
+
 
 
 
