@@ -147,10 +147,35 @@ Also we need aws credentials plugin to be installed in jenkins console.
 Then we can refer this ID in the jenkins pipeline as and when needed.
 
 upstream and downstream: where there are dependencies between multiple jobs, we can trigger another pipeline when one pipeline is success.
+Assume job2 us dependent on job1. Means Job2 runs after job1 completes. So job1 is upstream for job2.  Job2 is downstream to job1
 
 
+Sequential and parallel stages: By default stages in jenkins are sequential. One stage runs after the previous stage completes.
+
+If one stage is independent of other stage, then we can run parallel satges.  Eg:
+```
+parallel {
+   stage('In Parallel 1') {
+       steps {
+           echo "In Parallel 1"
+       }
+   }
+   stage('In Parallel 2') {
+       steps {
+           echo "In Parallel 2"
+       }
+   }
+}
+
+```
+More computational power VM is needed to run parallel jobs.
 
 
+What are the jenkins agents we are using?
+
+VMs - are permanent agents. The disadvantage is , we need to maintain them, we need to maintain multiple agents for multiple projects/applications (nodejs, java, python etc)
+
+We can use temporary/ephemeral agents also (docker containers/k8s pods).
 
 
 
