@@ -89,7 +89,7 @@ resource "aws_lb_target_group" "expense_tg" {
     interval = 10
     matcher = "200-299"
     path = "/"  #frontend app team gives this.
-    port = 80 # port is 80 for front end
+    port = 8080 # port is 80 for front end, but k8s does not allow ports below 1024. Hence we are making frontend port health check as 8080 here and also in frontend nginx.conf file
     protocol = "HTTP"
     timeout = 6
     
