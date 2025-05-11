@@ -177,6 +177,10 @@ VMs - are permanent agents. The disadvantage is , we need to maintain them, we n
 
 We can use temporary/ephemeral agents also (docker containers/k8s pods).
 
+###### Kubernetes (k8s) restricts containers from binding to ports below 1024 due to security reasons, as these ports are considered privileged. They are system ports. As the pods run on non-root user, these ports are not allowed by k8s.
+
+
+
 
 
 
