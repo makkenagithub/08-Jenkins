@@ -11,7 +11,7 @@ pipeline {
         ansiColor('xterm')     // This is to display colors in pipeline output. Ansi colors plugin to be installed in jenkins console
     }
     parameters {
-        choice(name: 'CHOICE', choices: ['Apply', 'Destroy'], description: 'Action: terrafom apply or destroy')
+        choice(name: 'CHOICE', choices: ['Apply', 'Destroy'], description: 'Action: terrafom apply of destroy')
         password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password')
     }
 
@@ -22,7 +22,7 @@ pipeline {
                 // the below code in withAWS function has access to aws console. We stored the aws access key in jenkins console, that ID we are passing here.
                 withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                     sh """
-                        cd 00-vpc
+                        cd 10-sg
                         terrafom init -reconfigure
                         terraform plan -out=tfplan
                     """
@@ -35,10 +35,11 @@ pipeline {
                 message "Should we continue to ${params.CHOICE}"
                 ok "Yes, we should."
             }
+            
             steps {
-                 withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                            cd 00-vpc
+                            cd 10-sg
                             if [ ${params.CHOICE} == 'Apply' ]
                             then
                                 terraform apply -auto-approve tfplan
@@ -50,16 +51,44 @@ pipeline {
                 }
             }
         }
-        stage ('Trigger SG job pipeline') {
+        stage ('Destroy VPC') {
+            when {
+                expression { params.CHOICE == 'Destroy' }
+            }
+            steps{
+                build job: '00-vpc', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
+            }
+        }
+        
+        stage ('parallel jobs') {
             when {
                 expression { params.CHOICE == 'Apply' }
             }
-            steps{
-                build job: '10-sg', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+            parallel {
+                stage('run Bastion job') {
+                    steps {
+                        build job: '20-bastion', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+                    }
+                }
+                stage('run RDS DB job') {
+                    steps {
+                        build job: '25-rds', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+                    }
+                }
+                stage('run EKS job') {
+                    steps {
+                        build job: '30-eks', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+                    }
+                }
+                stage('run ECR job') {
+                    steps {
+                        build job: '70-ecr', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+                    }
+                }
             }
         }
-
     }
+
     //post build
     post {
         always {

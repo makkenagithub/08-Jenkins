@@ -22,7 +22,7 @@ pipeline {
                 // the below code in withAWS function has access to aws console. We stored the aws access key in jenkins console, that ID we are passing here.
                 withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                     sh """
-                        cd 00-vpc
+                        cd 30-eks
                         terrafom init -reconfigure
                         terraform plan -out=tfplan
                     """
@@ -31,14 +31,15 @@ pipeline {
         }
         stage('Terrafom apply or destroy') {
             
-            input {
-                message "Should we continue to ${params.CHOICE}"
-                ok "Yes, we should."
-            }
+            // input {
+            //     message "Should we continue to ${params.CHOICE}"
+            //     ok "Yes, we should."
+            // }
+            
             steps {
                  withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                            cd 00-vpc
+                            cd 30-eks
                             if [ ${params.CHOICE} == 'Apply' ]
                             then
                                 terraform apply -auto-approve tfplan
@@ -48,14 +49,6 @@ pipeline {
                             fi
                         """
                 }
-            }
-        }
-        stage ('Trigger SG job pipeline') {
-            when {
-                expression { params.CHOICE == 'Apply' }
-            }
-            steps{
-                build job: '10-sg', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
             }
         }
 
