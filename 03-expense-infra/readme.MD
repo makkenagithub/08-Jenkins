@@ -1,6 +1,8 @@
 # Expense DEV Infrastructure
 
+![alt text](expense-infra.svg)
 
+![alt text](image.png)
 
 * Make sure infra is created. 
 * Every resource should have dev in its name, so that it will not overlap with prod resources.
