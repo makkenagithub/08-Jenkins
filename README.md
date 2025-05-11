@@ -136,6 +136,19 @@ Also we need to install nodejs in AGENT-1 server. Similarly we need to build doc
 
 After installing docker, its better to disconnect and connect back agent with master.
 
+Credentials storage in Jenkins console:
+
+When we are creating terraform infra using jenkins pipeline, then we need to do aws configure, which needs credentials/tocken. Which can be stored in Jenkins console in the path
+
+Dashboard -> manage jenkins -> credentials -> system -> global credentials -> choose AWS credentials kind , then give some ID name and give aws key id and secret access key.
+
+Also we need aws credentials plugin to be installed in jenkins console.
+
+Then we can refer this ID in the jenkins pipeline as and when needed.
+
+upstream and downstream: where there are dependencies between multiple jobs, we can trigger another pipeline when one pipeline is success.
+
+
 
 
 
