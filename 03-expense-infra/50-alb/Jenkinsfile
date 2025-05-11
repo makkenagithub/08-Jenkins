@@ -1,0 +1,69 @@
+
+// This pipeline is to create vpc in AWS using jenkins pipeline
+pipeline {
+    // pre-build
+    agent {
+        label 'AGENT-1'
+    }
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()       //to disable the pipeline running simultaneously
+        ansiColor('xterm')     // This is to display colors in pipeline output. Ansi colors plugin to be installed in jenkins console
+    }
+    parameters {
+        choice(name: 'CHOICE', choices: ['Apply', 'Destroy'], description: 'Action: terrafom apply or destroy')
+        password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password')
+    }
+
+    //build
+    stages {
+        stage('Terrafom init and paln stage') {
+            steps {
+                // the below code in withAWS function has access to aws console. We stored the aws access key in jenkins console, that ID we are passing here.
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                    sh """
+                        cd 50-alb
+                        terrafom init -reconfigure
+                        terraform plan -out=tfplan
+                    """
+                }
+            }
+        }
+        stage('Terrafom apply or destroy') {
+            
+            // input {
+            //     message "Should we continue to ${params.CHOICE}"
+            //     ok "Yes, we should."
+            // }
+            
+            steps {
+                 withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                        sh """
+                            cd 50-alb
+                            if [ ${params.CHOICE} == 'Apply' ]
+                            then
+                                terraform apply -auto-approve tfplan
+                            elif if [ ${params.CHOICE} == 'Destroy' ]
+                            then
+                                terrafom destroy -auto-approve
+                            fi
+                        """
+                }
+            }
+        }
+
+    }
+    //post build
+    post {
+        always {
+            echo "this section runs always"
+            deleteDir()
+        }
+        success {
+            echo " this section runs only when success of pipeline"
+        }
+        failure {
+            echo "this runs when failure of pipeline"
+        }
+    }
+}

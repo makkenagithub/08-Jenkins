@@ -11,7 +11,7 @@ pipeline {
         ansiColor('xterm')     // This is to display colors in pipeline output. Ansi colors plugin to be installed in jenkins console
     }
     parameters {
-        choice(name: 'CHOICE', choices: ['Apply', 'Destroy'], description: 'Action: terrafom apply of destroy')
+        choice(name: 'CHOICE', choices: ['Apply', 'Destroy'], description: 'Action: terrafom apply or destroy')
         password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password')
     }
 
@@ -22,7 +22,7 @@ pipeline {
                 // the below code in withAWS function has access to aws console. We stored the aws access key in jenkins console, that ID we are passing here.
                 withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                     sh """
-                        cd 10-sg
+                        cd 80-cdn
                         terrafom init -reconfigure
                         terraform plan -out=tfplan
                     """
@@ -37,9 +37,9 @@ pipeline {
             // }
             
             steps {
-                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                 withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                            cd 10-sg
+                            cd 80-cdn
                             if [ ${params.CHOICE} == 'Apply' ]
                             then
                                 terraform apply -auto-approve tfplan
@@ -51,67 +51,81 @@ pipeline {
                 }
             }
         }
-        stage ('Destroy VPC') {
+        /* stage('Destroy') {
             when {
                 expression { params.CHOICE == 'Destroy' }
             }
-            steps{
-                build job: '00-vpc', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
-            }
-        }
-        
-        stage ('parallel jobs') {
-            when {
-                expression { params.CHOICE == 'Apply' }
-            }
             parallel {
-                stage('run Bastion job') {
+                stage('ECR') {
                     steps {
-                        build job: '20-bastion', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
-                    }
-                }
-                stage('run RDS DB job') {
-                    steps {
-                        build job: '25-rds', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
-                    }
-                }
-                stage('run EKS job') {
-                    steps {
-                        build job: '30-eks', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
-                    }
-                }
-                stage('run ECR job') {
-                    steps {
-                        build job: '70-ecr', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
-                    }
-                }
-            }
-        }
-        stage('Sequential') {
-            when {
-                expression { params.CHOICE == 'Apply' }
-            }
-            stages {
-                stage('ACM') {
-                    steps {
-                        build job: '40-acm', parameters: [string(name: 'CHOICE', value: "Apply")]
+                        build job: '70-ecr', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
                     }
                 }
                 stage('ALB') {
                     steps {
-                        build job: '50-alb', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+                        build job: '60-alb', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
                     }
                 }
-                stage('CDN') {
+                stage('EKS') {
                     steps {
-                        build job: '80-cdn', parameters: [string(name: 'CHOICE', value: "Apply")], wait: false
+                        build job: '40-eks', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: true
+                    }
+                }
+                stage('Bastion') {
+                    steps {
+                        build job: '20-bastion', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
+                    }
+                }
+
+            }
+        } */
+        stage('Destroy'){
+            when {
+                expression { params.CHOICE == 'Destroy' }
+            }
+            steps{
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                    script {
+                        def directories = ['80-cdn', '70-ecr', '50-alb', '40-acm', '30-eks', '25-rds', '20-bastion', '10-sg', '00-vpc']
+                        for (dir in directories) {
+                            echo "Destroying resources in directory: ${dir}"
+                            sh """
+                            cd ${dir}
+                            terraform init -reconfigure
+                            terraform destroy -auto-approve || { echo "Failed to destroy resources in ${dir}"; exit 1; }
+                            cd ..
+                            """
+                        }
+            }
+                }
+            }
+        }
+        /* stage('Sequential') {
+            when {
+                expression { params.CHOICE == 'Destroy' }
+            }
+            stages {
+                
+                stage('ACM') {
+                    steps {
+                        build job: '40-acm', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
+                    }
+                }
+                stage('SG-Destroy'){
+                    steps {
+                        build job: '10-sg', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: true
+                    }
+                }
+                stage('VPC-Destroy'){
+                    steps {
+                        build job: '00-vpc', parameters: [string(name: 'CHOICE', value: "Destroy")], wait: false
                     }
                 }
             }
                 
-        }
-    }
+        } */
 
+    }
     //post build
     post {
         always {
