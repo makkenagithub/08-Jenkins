@@ -1,0 +1,12 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: frontend-target-group
+  namespace: expense
+spec:
+  serviceRef:
+    name: frontend-service # route traffic to the front end service
+    port: 80
+  # fetch the alb target group arn from aws console
+  targetGroupARN: {{ .Values.tgb.arn }}
+  targetType: ip

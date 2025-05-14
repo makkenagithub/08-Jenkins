@@ -1,0 +1,78 @@
+pipeline {
+    // pre-build
+    agent {
+        label 'AGENT-1'
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()       //to disable the pipeline running simultaneously
+        //retry(1)        // retry once in case of failure
+    }
+    environment {
+        //appVersion = ''     // This is global env variable. we can use across pipeline
+        DEBUG = 'true'
+        appVersion = '' // this will become global, we can use across pipeline
+        region = 'us-east-1'
+        account_id = '315069654700'
+        project = 'expense'
+        environment = 'dev'
+        component = 'frontend'
+    }
+    //build
+    stages {
+        stage('Read json') {
+            steps {
+                script {
+                    def packageJson = readJSON file: 'package.json'
+                    appVersion = packageJson.version
+                    echo "App Version is : ${appVersion}"
+                }
+            }
+        }
+
+        stage('Dcoker build') {
+            steps {
+                // multiple sh commands can be enetered as below
+                //This is to build the image and psu h to ECR
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                    sh """
+                        aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.us-east-1.amazonaws.com
+
+                        docker build -t ${account_id}.dkr.ecr.us-east-1.amazonaws.com/${project}/${environment}/${component}:${appVersion} .
+
+                        docker images
+
+                        docker push ${account_id}.dkr.ecr.us-east-1.amazonaws.com/${project}/${environment}/${component}:${appVersion}
+                    """    
+                }
+            }
+        }
+        stage('Deploy') {
+            // we have to deploy to k8s with helm
+            steps {
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                    sh """
+                        aws eks update-kubeconfig --region ${region} --name ${project}-${environment}
+                        cd helm
+                        sed -i 's/IMAGE_VERSION/${appVersion}/g' values-${environment}.yaml
+                        helm upgrade --install ${component} -n ${project} -f values-${environment}.yaml .
+                    """
+                }
+            }
+        }
+        
+    }
+    //post build
+    post {
+        always {
+            echo "this section runs always"
+            deleteDir()
+        }
+        success {
+            echo " this section runs only when success of pipeline"
+        }
+        failure {
+            echo "this runs when failure of pipeline"
+        }
+    }
+}
