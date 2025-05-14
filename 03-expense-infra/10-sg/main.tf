@@ -171,3 +171,33 @@ resource "aws_security_group_rule" "eks_control_plane_bastion" {
   # security group to apply this rule to
   security_group_id = module.eks_control_plane_sg.id
 }
+
+
+
+resource "aws_security_group_rule" "mysql_bastion" {
+  type              = "ingress"
+  from_port         = 3306
+  to_port           = 3306
+  protocol          = "tcp"
+  source_security_group_id       = module.bastion_sg.id
+  security_group_id = module.mysql_sg.id
+}
+
+
+resource "aws_security_group_rule" "bastion_public" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = module.bastion_sg.id
+}
+
+resource "aws_security_group_rule" "mysql_worker_node" {
+  type              = "ingress"
+  from_port         = 3306
+  to_port           = 3306
+  protocol          = "tcp"
+  source_security_group_id = module.worker_node_sg.id
+  security_group_id = module.mysql_sg.id
+}
