@@ -218,7 +218,14 @@ functional testing should be done by testers.
 
 SRE - site reliability engineers take care of sonarqube installation upgrades etc
 
-Sonarqube : port is 9000. We can create an ec2 with AMI of sonar available in markcet place. Then need to setup few things in sonarqube console.
+Sonarqube : port is 9000. We can create an ec2 with AMI of sonarqube available in markcet place. Then need to setup few things in sonarqube console. 
+Console can be opened with http://<public-ip-of-sonarqube-ex2>:9000
+
+userid/password for console is admin/admin or admin/instance-id
+
+Sonarqube can be used for 2 purposes
+1. static source code analysis
+2. static application security testing
 
 
 
