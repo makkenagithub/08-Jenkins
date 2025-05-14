@@ -179,6 +179,47 @@ We can use temporary/ephemeral agents also (docker containers/k8s pods).
 
 ###### Kubernetes (k8s) restricts containers from binding to ports below 1024 due to security reasons, as these ports are considered privileged. They are system ports. As the pods run on non-root user, these ports are not allowed by k8s.
 
+sed command: (stream editor)
+
+It can be used to update the image version in helm values.yaml file, while running the jenkins file deployment. sed command used to update the values temporarily during jenkins deployment time.
+To insert the values in place holder file, perminantly we can use "sed -i" command
+
+```
+sed -i  -> to inser perminantly
+sed    -> to insert temporaruly during jenkins deployment time
+sed "1 a "   -> to append after 1 line of the file
+sed "1 i "   -> to inster in 1st ile of file
+sed "s/local/LOCAL/g"  <file name>    -> to replace local with LOCAL in the given file temporarily
+sed -i "s/local/LOCAL/g"  <file name>    -> to replace local with LOCAL in the given file permanantly
+```
+
+
+Devops steps:
+1. Initially create infra with terraform.
+2. keep ready the docker build file, k8s helm manifest files, jenkins pipelines ready with github-webhook
+3. Then when the developer push the code to github, then jenkins pipeline will be triggered with github-webhook, which internally build the docker build, then push the image to ecr, Then helm charts will be run and which fetch the image from ecr and then deployed to k8s pods.
+
+Devsecops: means, in addition to devops (as mentioned above), we need to enable the scanning in devsecops.
+
+Scanning: (shift left) means, shifting the security scanning and testing in dev before pushing code to main branch. So when developers push code to feature branches . we should scan and test. 
+
+Types of scan:
+1. static source code analysis(checks code is written properly or not - means, app response is proper or not, means performance ) - > SonarQube can be used
+2. static application security testing (checks any security issues in application code) - > SonarQube/github can be used
+3. dynamic application security testing (means , when the application is placed to public, how the public can attack the application is dynamic app security tetsing.) - Veracode can be used
+4. open source library scan - NexusIQ(paid service)/github(free) can be used
+5. image scanning. - ECR scanning. (we are pusing image to ecr, so we have option to scan the image in ECR itself)
+
+We run the scans and provie the reports. If any issues comes in scanning, then developers need to fix them.
+
+unit testing should be done by developers.
+
+functional testing should be done by testers.
+
+SRE - site reliability engineers take care of sonarqube installation upgrades etc
+
+Sonarqube : port is 9000. We can create an ec2 with AMI of sonar available in markcet place. Then need to setup few things in sonarqube console.
+
 
 
 
