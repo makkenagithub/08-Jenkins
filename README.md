@@ -223,9 +223,39 @@ Console can be opened with http://<public-ip-of-sonarqube-ex2>:9000
 
 userid/password for console is admin/admin or admin/instance-id
 
+Sonarqube is developed using JAVA
+
 Sonarqube can be used for 2 purposes
 1. static source code analysis
 2. static application security testing
+
+In sonarqueue also we have agent master kind of thing. In jenkins we have sonar scanner agent (we install it in jenkins), which scans the code given in the jenkins pipeline , it scans/analyses that code and sends the result to sonarqube server as created above for console. Sonar server analyses those results and gives the information to jenkins.
+1. sonar scanner scans/analyse the code
+2. sonar server configuration should be there in sonar scanner (like sonar server url, userid/pwd etc)
+3. sonar scanner reads the configuration upload the result to sonar server.
+
+1. Install sonarqube scanner plugin in jenkins console.
+2. Then Jenkins dashboard -> manage -> tools -> Add sonarqube scanner -> give name (sonar-6.0) -> isnatll from mavens and choose version 6.0 (even we can click on add scanner button below and add multiple scanners with different versions)-> apply and save
+3. This completes the sonarqube scanner installation in jenkins.
+
+Give the sonarqube server inofrmation in jenkins
+1. jenkins dashboard -. manage -> system -> sonarqube servers -> add sonarqube -> give name (sonar-6.0), give sonarqube server url (http://<sonarqubeserver-privateIP>:9000) -> add authentication token (get the token from sonarqube console -> my account -> security -> generate tocken -> choose global auth token ) -> + add -> choose secret text in kind filed and give the token in secret field, -> apply and save.
+
+https://www.geeksforgeeks.org/how-to-integrate-sonarqube-with-jenkins/
+
+In the above we have given sonar-6.0 as name and we have choosen 6.0 version. Some application may need to use sonarqube scanner version as 5 or 4 etc. We can add different scanners with different versions and choose whatver is required for scanning a particular application.
+
+we give project details in sonar-project.properties file seperately in real time. We get to know about all fileds in properties file from documentation only.
+https://docs.sonarsource.com/sonarqube-server/9.9/analyzing-source-code/scanners/sonarscanner/
+https://docs.sonarsource.com/sonarqube-server/9.9/analyzing-source-code/analysis-parameters/
+
+
+
+
+
+
+
+
 
 
 
