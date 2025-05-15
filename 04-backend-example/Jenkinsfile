@@ -34,6 +34,26 @@ pipeline {
                 sh 'npm install'    // AGENT-1 server needs to be installed with nodejs 20 with command dnf install nodejs -y
             }
         }
+        stage('SonarQube analysis') {
+            environment {
+                SCANNER_HOME = tool 'sonar-6.0' //scanner config name in jenkins console
+            }
+            steps {
+                // sonar server injection
+                withSonarQubeEnv('sonar-6.0') {
+                    sh '$SCANNER_HOME/bin/sonar-scanner'
+                    //generic scanner, it automatically understands the language and provide scan results
+                }
+            }
+        }
+
+        stage('SQuality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        } 
         stage('Dcoker build') {
             steps {
                 // multiple sh commands can be enetered as below
