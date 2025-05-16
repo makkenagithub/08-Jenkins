@@ -249,9 +249,29 @@ we give project details in sonar-project.properties file seperately in real time
 https://docs.sonarsource.com/sonarqube-server/9.9/analyzing-source-code/scanners/sonarscanner/
 https://docs.sonarsource.com/sonarqube-server/9.9/analyzing-source-code/analysis-parameters/
 
+Once we run the jenkins pipeline with sonar scanner, after successful run, the scanning report will be available in sonar server. 
 
+We can create quality gate in sonarqube server console. Sonarserver console -> quality gate -> create . 
+We can add some conditions such as code coverage percentage, duplicates percentage etc. If these conditions are passed then quality gate is opened. 
+We add conditions on new code and overall code also. (overall code = existing code + newly commited code. And new code = newly commited/added code)
 
+For interview purpose, we need to mention below if they ask quality gates.
+In quality gates we add conditions for code quality like issues >0, bugs>0, security rating - worse than A (ratings are A,B,C,D. A is good, D is worst), code coverage <80%, code smells >0 (means guessing the code), vulnerabilities >0  etc on both overall code and new code. If any of these conditions are met, code quality fails and the failed report can be seen by developers and improve their code.
 
+We can add as many quality gate as we can. We can use different quality gates for different projects. We can make a quality gate default for every project also.
+
+As devops engineer, we need fail/abort the build in jenkins pipeline if the quality gate fails. If quality gate passes, the we need to pass the build and then deploy. For this we add following stage in jenkins pipe line.
+```
+stage('SQuality Gate') {
+    steps {
+        timeout(time: 5, unit: 'MINUTES') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
+}
+```
+Aditionally we have to give jenkins info to sonarqube i.e. webhook configuration in sonarqube server console. 
+Sonarqube console -> Administration -> configuration -> webhooks -> create -> give jenkins url htto://<jenkinsIp>:8080/sonarqube-webhook/ (no need of secret)-> create 
 
 
 
