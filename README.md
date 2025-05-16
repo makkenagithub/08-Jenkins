@@ -273,6 +273,13 @@ stage('SQuality Gate') {
 Aditionally we have to give jenkins info to sonarqube i.e. webhook configuration in sonarqube server console. 
 Sonarqube console -> Administration -> configuration -> webhooks -> create -> give jenkins url htto://<jenkinsIp>:8080/sonarqube-webhook/ (no need of secret)-> create 
 
+Until now this is statis application security testing. Nect dynamic application security testing.
+
+dynamic application security testing: Our url will be given to some third party. They will do attacks on our website url and provide the results. This testing usually performed on non-prod url. This is testing wont be doen regularly. Its done once in a while.
+We have a popular tool veracode for it. Its costly tool. Freetrail is only available for business emails.
+
+
+
 
 
 
