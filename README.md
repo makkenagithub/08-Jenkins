@@ -298,9 +298,45 @@ Image is our output. We get image from CI.
 
 So CI will be done only for DEV env. But in QA/UST/PROD we do not do CI. Only deployment (CD) is done. This is called shared library. Eg:  Different teams from backend can use same pipeline
 
-Jenkins shared library:
+In real time CI and CD are separated. We can use same image and CD job to deploy application to multiple environments. Its build once and run anywhere. 
 
+Developers can do code commits multiple times in a day. there can be 100's of commits. But It does not mean to deploy the jenkins pipeline for every commit. We have an option to choose to deploy or not. We can use booleanParam. May be we can use choice also.
 
+CD directory will be having helm and a jenkins file deploy.
+
+Multi branch pipeline: every developer has his own branch (his feature brabch). So a pipeline should be there for every feature branch to support their development.
+
+Jenkins shared library: is a pipeline as function. It takes input and run pipeline. Its CENTRAL PIPELINE. There can be 50 nodejs services/codes/projects. All these projects can call this shared pipeline at a time. No need to maintain different pipelines for different projects. 
+
+In shared libraries, we create a groovey file eg: nodeJSEKSpipeline.groovy file. In which we define a function named call{}. We can call this shared library function from the Jenkinsfile in CI. So like this multilple projects can use the shared library at a time. 
+
+When we mention shared library name (nodeJSEKSpipeline(input) ) in Jenkciks CI file, by default it calls call() function in groovey file of shared lib. If we define any other explicit function , then we need to call with nodeJSEKSpipeline.FUNCTION_NAME(input)
+
+These are central pipelines. In certain projects there can be central devops engineers. They write these central pipelines (also Ansible roles, Terraform modules) and project specific devops engineers may use the shared lib central pipelines.
+
+When we are writing central pipelines, we need think on
+1. what is programming language
+2. what is build tool
+3. what is deployment platform
+
+When a new project comes , then we have to plan below things to onboard the project.
+1. create folders in jenkins
+2. Sonarqube
+3. k8s namespace
+4. create ECR repo
+5. veracode target
+6. enable github dependabot
+7. docker file
+8. helm charts
+
+To refer to shared library in jenkins 
+
+jenkins dsahboard -> manage jenkins -> system -> global trusted pipeline libraries -> add -> name should what we have given in (@Library('jenkins-shared-lib') _ in Jenkinsfile) -> default branch - main -> tick load implicitly -> git repository should be https://github.com/makkenagithub/08-Jenkins-shared-library.git (this is where central pipelines exists (.groovy files)) -> apply and save
+
+Now we have to create a backend pipeline in jenkins to refer to the multi branch pipeline.
+Jenkins dashboard -> create pipe line -> choose multi branch pipeline -> give the git repo of the CI (09-backend-ci-jenkins-shared-lib) -> apply and save
+
+After creating this multi branch pipeline, If there are n numner of feature branches in git , those many pipelines are automatically created. If new feature branch added, then new pipeline automatically created.
 
 
 
