@@ -1,0 +1,63 @@
+pipeline {
+    // pre-build
+    agent {
+        label 'AGENT-1'
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()       //to disable the pipeline running simultaneously
+        //retry(1)        // retry once in case of failure
+    }
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'prod'], description: 'choose the environment')
+        string(name: 'version',  description: 'Enter your application version')
+        string(name: 'jira-id',  description: 'Enter your jira id')
+    }
+    environment {
+        //appVersion = ''     // This is global env variable. we can use across pipeline
+        appVersion = '' // this will become global, we can use across pipeline
+        region = 'us-east-1'
+        account_id = ''
+        environment = ''
+        project = 'expense'
+        component = 'backend'
+    }
+
+    stages {
+        stage('setup environment') {
+            steps {
+                script {
+                    environment = params.ENVIRONMENT
+                    appVersion= params.version
+                }
+            }
+        }
+        stage('Deploy') {
+            // we have to deploy to k8s with helm
+            steps {
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                    sh """
+                        aws eks update-kubeconfig --region ${region} --name ${project}-${environment}
+                        cd helm
+                        sed -i 's/IMAGE_VERSION/${appVersion}/g' values-${environment}.yaml
+                        helm upgrade --install ${component} -n ${project} -f values-${environment}.yaml .
+                    """
+                }
+            }
+        }
+        
+    }
+    //post build
+    post {
+        always {
+            echo "this section runs always"
+            deleteDir()
+        }
+        success {
+            echo " this section runs only when success of pipeline"
+        }
+        failure {
+            echo "this runs when failure of pipeline"
+        }
+    }
+}

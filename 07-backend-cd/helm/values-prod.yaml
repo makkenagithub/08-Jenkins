@@ -1,0 +1,9 @@
+configMap:
+  # this is rds db url
+  db_host: expense-dev.czn6yzxlcsiv.us-east-1.rds.amazonaws.com
+deployment:
+  # get the image uri from ecr
+  imageURL: 315069654700.dkr.ecr.us-east-1.amazonaws.com/expense/dev/backend
+  imageVersion: IMAGE_VERSION
+hpa:
+  cpuUtilization: 20
