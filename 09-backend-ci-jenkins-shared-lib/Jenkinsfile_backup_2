@@ -1,0 +1,104 @@
+pipeline {
+    // pre-build
+    agent {
+        label 'AGENT-1'
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()       //to disable the pipeline running simultaneously
+        //retry(1)        // retry once in case of failure
+    }
+    parameters {
+        booleanParam(name: 'DEPLOY', defaultValue: false, description: 'select to deploy or not')
+    }
+    environment {
+        //appVersion = ''     // This is global env variable. we can use across pipeline
+        DEBUG = 'true'
+        appVersion = '' // this will become global, we can use across pipeline
+        region = 'us-east-1'
+        account_id = '315069654700'
+        project = 'expense'
+        environment = 'dev'
+        component = 'backend'
+    }
+    //build
+    stages {
+        stage('Read json') {
+            steps {
+                script {
+                    def packageJson = readJSON file: 'package.json'
+                    appVersion = packageJson.version
+                    echo "App Version is : ${appVersion}"
+                }
+            }
+        }
+        stage('Install dependencies') {
+            steps {
+                sh 'npm install'    // AGENT-1 server needs to be installed with nodejs 20 with command dnf install nodejs -y
+            }
+        }
+        stage('SonarQube analysis') {
+            environment {
+                SCANNER_HOME = tool 'sonar-6.0' //scanner config name in jenkins console
+            }
+            steps {
+                // sonar server injection
+                withSonarQubeEnv('sonar-6.0') {
+                    sh '$SCANNER_HOME/bin/sonar-scanner'
+                    //generic scanner, it automatically understands the language and provide scan results
+                }
+            }
+        }
+
+        stage('SQuality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true  //abort pipeline , if quality gate fails.
+                }
+            }
+        } 
+        stage('Dcoker build') {
+            steps {
+                // multiple sh commands can be enetered as below
+                //This is to build the image and psu h to ECR
+                withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                    sh """
+                        aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.us-east-1.amazonaws.com
+
+                        docker build -t ${account_id}.dkr.ecr.us-east-1.amazonaws.com/${project}/${environment}/${component}:${appVersion} .
+
+                        docker images
+
+                        docker push ${account_id}.dkr.ecr.us-east-1.amazonaws.com/${project}/${environment}/${component}:${appVersion}
+                    """    
+                }
+            }
+        }
+        stage('Deploy') {
+            when {
+                expession { param.DEPLOY }
+            }
+            // we have to deploy to k8s with helm
+            steps {
+                build job: 'backend-cd', parameters: [
+                    string(name: 'version', value: "${appVersion}"),
+                    string(name: 'ENVIRONMENT', value: "dev")
+                    ], wait: true       // true means, if this stage success then this CI will also be success, else fail. hence we give wait as true
+            }
+        }
+        
+    }
+    //post build
+    post {
+        always {
+            echo "this section runs always"
+            deleteDir()
+        }
+        success {
+            echo " this section runs only when success of pipeline"
+        }
+        failure {
+            echo "this runs when failure of pipeline"
+        }
+    }
+}

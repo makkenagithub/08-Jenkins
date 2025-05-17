@@ -1,0 +1,18 @@
+
+@Library('jenkins-shared-lib') _    // we can give some library name
+// above line means, we are calling jenkins shared library.
+//above line gets the global pipelines from jenkins system configuration
+
+def configmap = [
+    project = "expense",
+    component = "backend"
+]
+
+if ( ! env.BRANCH_NAME.equalsIgnoreCase(main))  {    // true, if branch is feature branch, 
+    nodeJSEKSpipeline(configmap)
+}
+else
+{
+    echo "follow process of PROD release"   // for main branch we do not use central pipelines.
+}
+
