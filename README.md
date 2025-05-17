@@ -209,6 +209,7 @@ Types of scan:
 3. dynamic application security testing (means , when the application is placed to public, how the public can attack the application is dynamic app security tetsing.) - Veracode can be used
 4. open source library scan - NexusIQ(paid service)/github(free) can be used
 5. image scanning. - ECR scanning. (we are pusing image to ecr, so we have option to scan the image in ECR itself)
+6. dependencies scan - blackduck, nexus scan, dependabot etc
 
 We run the scans and provie the reports. If any issues comes in scanning, then developers need to fix them.
 
@@ -277,6 +278,27 @@ Until now this is statis application security testing. Nect dynamic application 
 
 dynamic application security testing: Our url will be given to some third party. They will do attacks on our website url and provide the results. This testing usually performed on non-prod url. This is testing wont be doen regularly. Its done once in a while.
 We have a popular tool veracode for it. Its costly tool. Freetrail is only available for business emails.
+
+Dependencies scan:
+We are downloading dependencies for nodejs from package.json. Similarly java codes download some other dependencies. So we need to scan these dependencies also.
+We have nexus scan, black duck , but they are enterprose editions. Dependabot from github also there.
+
+We can use dependency scan from github. Goto our repository having backend/frontend code -> security -> dependabot alerts -> enable
+
+It shows the issues with priority as critical, high, moderate, low.
+
+
+CI-CD:
+Until now in jenkins pipeline we wrote both CI and CD. Pipeline deploys the image to k8s pods through helm. But we need to seperate CI and CD in real time.
+CI triggers CD.
+Image is our output. We get image from CI.
+
+1. Dev - We use the image obtained from CI and then we use different config like values-dev.yaml file
+2. QA/UAT/PROD - same image used, but different confid like values-prod.yaml.
+
+So CI will be done only for DEV env. But in QA/UST/PROD we do not do CI. Only deployment (CD) is done. This is called shared library. Eg:  Different teams from backend can use same pipeline
+
+Jenkins shared library:
 
 
 
