@@ -340,9 +340,67 @@ After creating this multi branch pipeline, If there are n numner of feature bran
 
 
 
+### java commands:
+```
+#compile/build
+mvn clean compile
+
+# test -  junit test reports generated
+mvn test
+
+# package
+mvn package -DskipTests
+
+FOr gradle replace mvn by './gradlew'
+#compile/build
+./gradlew clean compile
+
+# test -  junit test reports generated
+./gradlew test
+
+# package
+./gradlew package -DskipTests
 
 
+```
 
+### nodejs commands:
+```
+# instal dependencies
+npm install
+
+# test - junit reports are generated
+npm test
+
+# build
+npm run build
+
+```
+### python commands
+```
+# setup python
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# test
+source ${VENV_DIR}/bin/activate
+pytest --maxfail=1 --disable-warnings -q
+or
+pytest --junitxml=reports/results.xml
+
+
+```
+### golang
+```
+# Setup Dependencies
+go mod tidy
+
+# build
+go build -o app .
+
+# test
+go test ./... -v -coverprofile=coverage.out
+```
 
 
 
