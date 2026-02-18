@@ -402,6 +402,74 @@ go build -o app .
 go test ./... -v -coverprofile=coverage.out
 ```
 
+### how to store artifacts in jenkins to some repository? 
+fingerprint: true   -> Tracks file usage across builds
+```
+stage('Build') {
+    steps {
+        sh 'mvn clean package'
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+    }
+}
+```
+Where Are Artifacts Stored?
+
+Stored inside:
+```
+JENKINS_HOME/jobs/<job-name>/builds/<build-number>/archive/
+```
+
+And visible in Jenkins UI:
+```
+Job → Build # → Artifacts
+```
+
+Stash vs Archive (Important Difference):
+
+Jenkins also has:
+
+🔹 stash
+
+Temporary storage
+
+Used to pass files between stages
+
+Not kept after build
+```
+stash name: 'app', includes: 'target/*.jar'
+```
+
+🔹 archiveArtifacts
+
+Permanent storage
+
+Visible in Jenkins UI
+
+Kept according to build retention policy
 
 
 
+Uploading artifacts to a repository in a CI/CD pipeline (like Jenkins) is typically done using Maven deploy, or by using repository-specific plugins.
+
+The most common artifact repositories are:
+
+Nexus Repository Manager
+
+JFrog Artifactory
+
+Configure the nexus repository settings in pom.xml and id, passowrds in settings.xml
+
+Then deploy to repsoitory woth mvn deploy command
+```
+pipeline {
+    agent any
+
+    stages {
+        stage('Build & Deploy') {
+            steps {
+                sh 'mvn -B clean deploy'
+            }
+        }
+    }
+}
+```
