@@ -473,3 +473,98 @@ pipeline {
     }
 }
 ```
+
+### archiveArtifacts, stash, unstash, upload/download to S3:
+
+stash and unstash:
+```
+stage('Build') {
+    steps {
+        sh 'mvn clean package'
+        stash name: 'app-build', includes: 'target/*.jar'
+    }
+}
+
+stage('Deploy') {
+    steps {
+        unstash 'app-build'
+        sh 'ls -l target/'
+    }
+}
+```
+across different agents:
+```
+pipeline {
+    agent none
+
+    stages {
+        stage('Build') {
+            agent { label 'linux' }
+            steps {
+                sh 'mvn package'
+                stash name: 'artifact', includes: 'target/*.jar'
+            }
+        }
+
+        stage('Test') {
+            agent { label 'windows' }
+            steps {
+                unstash 'artifact'
+                bat 'dir target'
+            }
+        }
+    }
+}
+```
+S3:
+```
+stage('Upload to S3') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh '''
+                        aws s3 cp target/app.jar s3://my-bucket/app.jar
+                    '''
+                }
+            }
+}
+
+stage('Download from S3') {
+    steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-creds'
+        ]]) {
+            sh '''
+                aws s3 cp s3://my-bucket/app.jar .
+            '''
+        }
+    }
+}
+```
+Using S3 plugin in jenkins: install S3 plugin, Pipeline AWS Steps plugin
+```
+ stage('Upload') {
+     steps {
+         s3Upload(
+             bucket: 'my-bucket',
+             file: 'target/app.jar',
+             path: 'app.jar'
+         )
+     }
+ }
+
+stage{
+   steps{
+     s3Download(
+         bucket: 'my-bucket',
+         file: 'app.jar',
+         path: '.'
+     )
+   }
+}
+
+```
+
