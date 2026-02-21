@@ -567,4 +567,32 @@ stage{
 }
 
 ```
+archiveArtifacts and download artifacts:
+```
+stage('Build') {
+     steps {
+         sh 'mvn clean package'
+         archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+     }
+}
+
+# reuse in the same pipeline
+stage('Deploy') {
+    steps {
+        unarchive mapping: ['target/app.jar': 'app.jar']
+        sh 'ls -l'
+    }
+```
+To use in different pipeline? - Reuse in Another Job (Most Common Case)
+```
+stage('Copy Artifact') {
+     steps {
+         copyArtifacts(
+             projectName: 'Build-Job',
+             selector: lastSuccessful(),
+             filter: 'target/*.jar'
+         )
+     }
+}
+```
 
