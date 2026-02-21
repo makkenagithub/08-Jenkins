@@ -596,3 +596,20 @@ stage('Copy Artifact') {
 }
 ```
 
+usage:
+```
+stages{
+        stage('BUILD and upload artifacts'){
+            mvn clean package
+            archiveArtifacts artifact:'/target/*.jar, /target/*.war', fingerprint: true
+            stash name: 'artifact', includes: '/target/*.jar, /target/*.war'
+            s3upload(bucket:'mybucket', file:'/target/*.jar', path: 'mybucket/dev/java/')
+        }
+        stage('download artifacts'){
+            copyArtifacts(projectName: 'build-job', filter: '/target/*.jar')
+            unstash name:'artifact'
+            s3download(bucket: 'mybucket', file: './app.jar', path: 'mybucket/dev/java/')
+        }
+}
+```
+
